@@ -1,8 +1,8 @@
 ### GeoEngAI
 #### In the first iteration of this pursuit, we evaluate the potential implications of mitigation and intervention strategies with a set of experiments utilizing historical reanalysis data (e.g., ERA5) and scenario-based model simulations (e.g., GeoMIP, CDRMIP) to examine the global response to deploying these strategies. The following iteration will integrate a reduced complexity model (i.e., OSCAR v3.3) and artificial intelligence (AI) into the framework to better understand the disparities among the permafrost carbon feedback (PCF) as well as optimizing the decision-process governing mitigation and geoengineering intervention.
 #### GeoEngAI is a hybridized ensemble learning framework composed of stacked convolutional layers and long short-term memory-encoded bidirectional recurrent neural networks. This multimodal deep learning architecture simultaneously ingests and analyzes reanalysis observations (ERA5) and process-based CMIP6 modeling ensemble outputs (i.e., 2-m temperature, total precipitation, atmospheric methane concentration).
-#### Bradley A. Gay, PhD | NASA Postdoctoral Program Fellow </br>
-#### Jet Propulsion Laboratory, California Institute of Technology
+>> Bradley A. Gay, PhD | NASA Postdoctoral Program Fellow
+>> Jet Propulsion Laboratory, California Institute of Technology
 ### Relevant Manuscripts
 #### Gay, B. A., Mandrake, L., Miner, K. R., & Miller, C. E., 2024. Assessing Earth System Responses to Climate Mitigation and Intervention with Scenario-Based Simulations and Data-Driven Insight. Nature, Climate Engineering. Under Review.
 #### Gay, B. A., Pastick, N. J., Watts, J. D., et al., 2024. Decoding the Spatiotemporal Complexities of the Permafrost Carbon Feedback with Multimodal Ensemble Learning. Journal of Geophysical Research, Machine Learning and Computation. Under Review.
