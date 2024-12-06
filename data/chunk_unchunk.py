@@ -1,50 +1,151 @@
-#For LFS: chunking .nc files
+# Gay, B., Mandrake, L., Miller, C., & Miner, K. (2024). geoengai (Version 1.0.0) [Computer software]. https://doi.org/10.3334/ORNLDAAC/2371
+
+
+####################################################################################################
+
+# To unchunk the chunked files in the /data/* directories, utilize the helper functions below prior to working through the notebook; the notebook contains methods to derive these datasets from its sources as well.
+
+####################################################################################################
+#### Unchunking .nc files ####
+####################################################################################################
+
 import os
 import xarray as xr
-import pandas as pd
-import math
+from cftime import num2date
+# Directory containing NetCDF chunks
+chunk_dir = "https://github.com/bradleygay/geoengai/blob/main/data/cmip6chunks/*/*"
+output_file = "/*/cmip6_*_reassembled_file.nc"
+# Get a sorted list of chunk files
+chunk_files = sorted([os.path.join(chunk_dir, f) for f in os.listdir(chunk_dir) if f.endswith(".nc")])
+datasets = []
+for f in chunk_files:
+    try:
+        # Open the dataset without decoding times
+        ds = xr.open_dataset(f, decode_times=False)
+        # Decode times manually if the 'time' variable exists
+        if "time" in ds.variables and "units" in ds["time"].attrs:
+            time_units = ds["time"].attrs["units"]
+            calendar = ds["time"].attrs.get("calendar", "standard")
+            ds["time"] = num2date(ds["time"].values, units=time_units, calendar=calendar)
+        datasets.append(ds)
+    except Exception as e:
+        print(f"Error loading file {f}: {e}")
+# Concatenate along the time dimension
+combined_dataset = xr.concat(datasets, dim="time")
+# Save the reassembled dataset to a single NetCDF file
+combined_dataset.to_netcdf(output_file)
+print(f"Reassembled file saved at: {output_file}")
 
-input_dir = "/Users/bgay/geoengai/data/cmip6"
-output_dir = "/Users/bgay/geoengai/data/cmip6chunked"
-os.makedirs(output_dir, exist_ok=True)
-time_chunk_size = 100  # Adjust based on your needs (e.g., 100 time steps per file)
-def chunk_netcdf(file_path, output_dir, time_chunk_size):
-    filename = os.path.basename(file_path)
-    base_name, ext = os.path.splitext(filename)
-    ds = xr.open_dataset(file_path)
-    if "time" not in ds.dims:
-        print(f"No time dimension in {file_path}. Skipping...")
-        return
-    total_time_steps = ds.dims["time"]
-    for start in range(0, total_time_steps, time_chunk_size):
-        end = min(start + time_chunk_size, total_time_steps)
-        chunk = ds.isel(time=slice(start, end))
-        chunk_filename = f"{base_name}_chunk_{start}_{end}{ext}"
-        chunk.to_netcdf(os.path.join(output_dir, chunk_filename))
-        print(f"Saved: {chunk_filename}")
-    ds.close()
-for file in os.listdir(input_dir):
-    if file.endswith(".nc"):
-        print(f"Processing {file}...")
-        chunk_netcdf(os.path.join(input_dir, file), output_dir, time_chunk_size)
-        
 ####################################################################################################
 
-#For LFS: chunking .pkl files
+#Unchunking .pkl files (ERA5)
 import os
+import pickle
 import pandas as pd
-df = pd.read_pickle("/Users/bgay/geoengai/era5_df.pkl")
-chunks = [df.iloc[i:i+1000000] for i in range(0, len(df), 1000000)]
-for idx, chunk in enumerate(chunks):
-    chunk.to_pickle(f”era5_chunk_{idx}.pkl")
-
-df = pd.read_pickle("/Users/bgay/geoengai/cruts408.pkl”)
-chunks = [df.iloc[i:i+1000000] for i in range(0, len(df), 1000000)]
-for idx, chunk in enumerate(chunks):
-    chunk.to_pickle(f”cruts408_chunk_{idx}.pkl")
+# Directory containing pickle chunks
+3chunk_dir = "https://github.com/bradleygay/geoengai/blob/main/data/era5chunks"
+output_file = "/era5_reassembled_file.nc"
+# Initialize a list to store chunks
+chunks = []
+# Get a sorted list of `.pkl` files
+chunk_files = sorted([os.path.join(chunk_dir, f) for f in os.listdir(chunk_dir) if f.endswith(".pkl")])
+# Check if `.pkl` files are found
+if not chunk_files:
+    print("No `.pkl` files found in the directory.")
+else:
+    print(f"Found {len(chunk_files)} `.pkl` files.")
+# Load and validate chunks
+for f in chunk_files:
+    try:
+        with open(f, "rb") as chunk_file:
+            data = pickle.load(chunk_file)
+            # Check if the chunk is a DataFrame
+            if isinstance(data, pd.DataFrame):
+                chunks.append(data)
+                print(f"Loaded file {f} with type {type(data)}")
+            else:
+                print(f"Skipping unsupported type: {type(data)} in file {f}")
+    except Exception as e:
+        print(f"Error loading file {f}: {e}")
+# Concatenate all valid chunks
+if chunks:
+    combined_data = pd.concat(chunks, ignore_index=True)
+    print(f"Combined data contains {len(combined_data)} rows.")
+else:
+    print("No valid DataFrame objects to concatenate.")
+# Save the combined DataFrame
+try:
+    with open(output_file, "wb") as f:
+        pickle.dump(combined_data, f)
+    print(f"Reassembled DataFrame saved to {output_file}")
+except Exception as e:
+    print(f"Error saving combined data: {e}")
+# Verify the structure of the combined DataFrame
+print(combined_data.info())
+print(combined_data.head())
 
 ####################################################################################################
-#MORE CHUNKING#
+
+#Unchunking .pkl files (CRU TS408)
+import os
+import pickle
+import pandas as pd
+# Directory containing pickle chunks
+chunk_dir = "https://github.com/bradleygay/geoengai/blob/main/data/cruts408chunks"
+output_file = "/cryts408_reassembled_file.nc"
+# Initialize a list to store chunks
+chunks = []
+# Get a sorted list of `.pkl` files
+chunk_files = sorted([os.path.join(chunk_dir, f) for f in os.listdir(chunk_dir) if f.endswith(".pkl")])
+# Check if `.pkl` files are found
+if not chunk_files:
+    print("No `.pkl` files found in the directory.")
+else:
+    print(f"Found {len(chunk_files)} `.pkl` files.")
+# Load and validate chunks
+for f in chunk_files:
+    try:
+        with open(f, "rb") as chunk_file:
+            data = pickle.load(chunk_file)
+            # Check if the chunk is a DataFrame
+            if isinstance(data, pd.DataFrame):
+                chunks.append(data)
+                print(f"Loaded file {f} with type {type(data)}")
+            else:
+                print(f"Skipping unsupported type: {type(data)} in file {f}")
+    except Exception as e:
+        print(f"Error loading file {f}: {e}")
+# Concatenate all valid chunks
+if chunks:
+    combined_data = pd.concat(chunks, ignore_index=True)
+    print(f"Combined data contains {len(combined_data)} rows.")
+else:
+    print("No valid DataFrame objects to concatenate.")
+# Save the combined DataFrame
+try:
+    with open(output_file, "wb") as f:
+        pickle.dump(combined_data, f)
+    print(f"Reassembled DataFrame saved to {output_file}")
+except Exception as e:
+    print(f"Error saving combined data: {e}")
+# Verify the structure of the combined DataFrame
+print(combined_data.info())
+print(combined_data.head())
+
+
+
+####################################################################################################
+####################################################################################################
+####Helper functions used to chunk source files####
+####################################################################################################
+####################################################################################################
+
+
+
+# To chunk the source files, utilize the helper functions below while working through the notebook
+
+####################################################################################################
+#### Chunking .nc files ####
 ####################################################################################################
 
 #For LFS: chunking .nc files
@@ -55,8 +156,8 @@ import math
 import pandas as pd
 
 # Directory containing NetCDF files
-input_dir = "/Users/bgay/geoengai/cmip6"
-output_dir = "/Users/bgay/geoengai/cmip6chunked"
+input_file = "/*/cmip6_*_reassembled_file.nc"
+output_dir = "https://github.com/bradleygay/geoengai/blob/main/data/cmip6chunks/*/*"
 os.makedirs(output_dir, exist_ok=True)
 # File size limit in bytes (e.g., 2GB = 2147483648 bytes)
 #file_size_limit = 2 * 1024**3  # 2GB
@@ -118,7 +219,9 @@ for file in os.listdir(input_dir):
         chunk_netcdf_by_size(os.path.join(input_dir, file), output_dir, file_size_limit)
         
 ####################################################################################################
-        
+#### Chunking .pkl files ####
+####################################################################################################
+
 #For LFS: chunking .pkl files (ERA5)
 import os
 import pickle
@@ -126,8 +229,8 @@ import math
 import pandas as pd
 
 # Directory containing .pkl files
-input_dir = "/Users/bgay/geoengai/era5"
-output_dir = "/Users/bgay/geoengai/era5chunked"
+input_file = "/*/era5_reassembled_file.nc"
+output_dir = "https://github.com/bradleygay/geoengai/blob/main/data/era5chunks"
 os.makedirs(output_dir, exist_ok=True)
 
 # File size limit in bytes (e.g., 2GB = 2147483648 bytes)
@@ -187,8 +290,8 @@ import math
 import pandas as pd
 
 # Directory containing .pkl files
-input_dir = "/Users/bgay/geoengai/cruts408"
-output_dir = "/Users/bgay/geoengai/cruts408chunked"
+input_file = "/*/cryts408_reassembled_file.nc"
+output_dir = "https://github.com/bradleygay/geoengai/blob/main/data/cruts408chunks"
 os.makedirs(output_dir, exist_ok=True)
 
 # File size limit in bytes (e.g., 2GB = 2147483648 bytes)
@@ -241,131 +344,55 @@ for file in os.listdir(input_dir):
 
 
 
+
+
 ####################################################################################################
 ####################################################################################################
-#UNCHUNKING#
+# Archived code
 ####################################################################################################
 ####################################################################################################
 
+#For LFS: chunking .nc files
 import os
 import xarray as xr
-from cftime import num2date
-# Directory containing NetCDF chunks
-chunk_dir = "/Users/bgay/geoengai/data/cmip6chunks/ch4"
-output_file = "/Users/bgay/geoengai/data/cmip6_ch4_reassembled_file.nc"
-# Get a sorted list of chunk files
-chunk_files = sorted([os.path.join(chunk_dir, f) for f in os.listdir(chunk_dir) if f.endswith(".nc")])
-datasets = []
-for f in chunk_files:
-    try:
-        # Open the dataset without decoding times
-        ds = xr.open_dataset(f, decode_times=False)
-        # Decode times manually if the 'time' variable exists
-        if "time" in ds.variables and "units" in ds["time"].attrs:
-            time_units = ds["time"].attrs["units"]
-            calendar = ds["time"].attrs.get("calendar", "standard")
-            ds["time"] = num2date(ds["time"].values, units=time_units, calendar=calendar)
-        datasets.append(ds)
-    except Exception as e:
-        print(f"Error loading file {f}: {e}")
-# Concatenate along the time dimension
-combined_dataset = xr.concat(datasets, dim="time")
-# Save the reassembled dataset to a single NetCDF file
-combined_dataset.to_netcdf(output_file)
-print(f"Reassembled file saved at: {output_file}")
+import pandas as pd
+import math
 
+input_dir = "/Users/bgay/geoengai/data/cmip6"
+output_dir = "/Users/bgay/geoengai/data/cmip6chunked"
+os.makedirs(output_dir, exist_ok=True)
+time_chunk_size = 100  # Adjust based on your needs (e.g., 100 time steps per file)
+def chunk_netcdf(file_path, output_dir, time_chunk_size):
+    filename = os.path.basename(file_path)
+    base_name, ext = os.path.splitext(filename)
+    ds = xr.open_dataset(file_path)
+    if "time" not in ds.dims:
+        print(f"No time dimension in {file_path}. Skipping...")
+        return
+    total_time_steps = ds.dims["time"]
+    for start in range(0, total_time_steps, time_chunk_size):
+        end = min(start + time_chunk_size, total_time_steps)
+        chunk = ds.isel(time=slice(start, end))
+        chunk_filename = f"{base_name}_chunk_{start}_{end}{ext}"
+        chunk.to_netcdf(os.path.join(output_dir, chunk_filename))
+        print(f"Saved: {chunk_filename}")
+    ds.close()
+for file in os.listdir(input_dir):
+    if file.endswith(".nc"):
+        print(f"Processing {file}...")
+        chunk_netcdf(os.path.join(input_dir, file), output_dir, time_chunk_size)
+        
 ####################################################################################################
 
-#Unchunking .pkl files (ERA5)
+#For LFS: chunking .pkl files
 import os
-import pickle
 import pandas as pd
-# Directory containing pickle chunks
-chunk_dir = "/Users/bgay/geoengai/data/era5chunks"
-output_file = "/Users/bgay/geoengai/data/era5_reassembled_file.pkl"
-# Initialize a list to store chunks
-chunks = []
-# Get a sorted list of `.pkl` files
-chunk_files = sorted([os.path.join(chunk_dir, f) for f in os.listdir(chunk_dir) if f.endswith(".pkl")])
-# Check if `.pkl` files are found
-if not chunk_files:
-    print("No `.pkl` files found in the directory.")
-else:
-    print(f"Found {len(chunk_files)} `.pkl` files.")
-# Load and validate chunks
-for f in chunk_files:
-    try:
-        with open(f, "rb") as chunk_file:
-            data = pickle.load(chunk_file)
-            # Check if the chunk is a DataFrame
-            if isinstance(data, pd.DataFrame):
-                chunks.append(data)
-                print(f"Loaded file {f} with type {type(data)}")
-            else:
-                print(f"Skipping unsupported type: {type(data)} in file {f}")
-    except Exception as e:
-        print(f"Error loading file {f}: {e}")
-# Concatenate all valid chunks
-if chunks:
-    combined_data = pd.concat(chunks, ignore_index=True)
-    print(f"Combined data contains {len(combined_data)} rows.")
-else:
-    print("No valid DataFrame objects to concatenate.")
-# Save the combined DataFrame
-try:
-    with open(output_file, "wb") as f:
-        pickle.dump(combined_data, f)
-    print(f"Reassembled DataFrame saved to {output_file}")
-except Exception as e:
-    print(f"Error saving combined data: {e}")
-# Verify the structure of the combined DataFrame
-print(combined_data.info())
-print(combined_data.head())
+df = pd.read_pickle("/Users/bgay/geoengai/era5_df.pkl")
+chunks = [df.iloc[i:i+1000000] for i in range(0, len(df), 1000000)]
+for idx, chunk in enumerate(chunks):
+    chunk.to_pickle(f”era5_chunk_{idx}.pkl")
 
-####################################################################################################
-
-#Unchunking .pkl files (CRU TS408)
-import os
-import pickle
-import pandas as pd
-# Directory containing pickle chunks
-chunk_dir = "/Users/bgay/geoengai/data/cruts408chunks"
-output_file = "/Users/bgay/geoengai/data/cryts408_reassembled_file.pkl"
-# Initialize a list to store chunks
-chunks = []
-# Get a sorted list of `.pkl` files
-chunk_files = sorted([os.path.join(chunk_dir, f) for f in os.listdir(chunk_dir) if f.endswith(".pkl")])
-# Check if `.pkl` files are found
-if not chunk_files:
-    print("No `.pkl` files found in the directory.")
-else:
-    print(f"Found {len(chunk_files)} `.pkl` files.")
-# Load and validate chunks
-for f in chunk_files:
-    try:
-        with open(f, "rb") as chunk_file:
-            data = pickle.load(chunk_file)
-            # Check if the chunk is a DataFrame
-            if isinstance(data, pd.DataFrame):
-                chunks.append(data)
-                print(f"Loaded file {f} with type {type(data)}")
-            else:
-                print(f"Skipping unsupported type: {type(data)} in file {f}")
-    except Exception as e:
-        print(f"Error loading file {f}: {e}")
-# Concatenate all valid chunks
-if chunks:
-    combined_data = pd.concat(chunks, ignore_index=True)
-    print(f"Combined data contains {len(combined_data)} rows.")
-else:
-    print("No valid DataFrame objects to concatenate.")
-# Save the combined DataFrame
-try:
-    with open(output_file, "wb") as f:
-        pickle.dump(combined_data, f)
-    print(f"Reassembled DataFrame saved to {output_file}")
-except Exception as e:
-    print(f"Error saving combined data: {e}")
-# Verify the structure of the combined DataFrame
-print(combined_data.info())
-print(combined_data.head())
+df = pd.read_pickle("/Users/bgay/geoengai/cruts408.pkl”)
+chunks = [df.iloc[i:i+1000000] for i in range(0, len(df), 1000000)]
+for idx, chunk in enumerate(chunks):
+    chunk.to_pickle(f”cruts408_chunk_{idx}.pkl")
