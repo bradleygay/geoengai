@@ -3,8 +3,8 @@
 >> Bradley A. Gay, PhD | NASA Postdoctoral Program Fellow
 >> Jet Propulsion Laboratory, California Institute of Technology
 ### Relevant Manuscripts
-#### Gay, B. A., Mandrake, L., Miner, K. R., & Miller, C. E., 2024. Assessing Earth System Responses to Climate Mitigation and Intervention with Scenario-Based Simulations and Data-Driven Insight. Nature, Climate Engineering. Under Review.
-#### Gay, B. A., Pastick, N. J., Watts, J. D., et al., 2024. Decoding the Spatiotemporal Complexities of the Permafrost Carbon Feedback with Multimodal Ensemble Learning. Journal of Geophysical Research, Machine Learning and Computation. Under Review.
+#### Gay, B. A., Mandrake, L., Miner, K. R., & Miller, C. E., 2025. Assessing Earth System Responses to Climate Mitigation and Intervention with Scenario-Based Simulations and Data-Driven Insight. Nature, Scientific Reports. In Press.
+#### Gay, B. A., Pastick, N. J., Watts, J. D., et al., 2025. Decoding the Spatiotemporal Complexities of the Permafrost Carbon Feedback with Multimodal Ensemble Learning. Journal of Geophysical Research, Machine Learning and Computation. In Press.
 #### Gay, B. A., Züfle, A. E., Armstrong, A. H., et al. Investigating Permafrost Carbon Dynamics in Alaska with Artificial Intelligence, December 26, 2023. ESS Open Archive. https://doi.org/10.22541/essoar.170355056.64772303/v1
 #### Gay, B. A., Züfle, A. E., Armstrong, A. H., et al. Investigating High-Latitude Permafrost Carbon Dynamics with Artificial Intelligence and Earth System Data Assimilation, December 26, 2023. ESS Open Archive. https://doi.org/10.22541/essoar.170355053.35677457/v1
 #### Gay, B.A., Pastick, N.J., Züfle, A.E., Armstrong, A.H., Miner, K.R., Qu, J.J., 2023. Investigating permafrost carbon dynamics in Alaska with artificial intelligence. Environmental Research Letters 18. https://doi.org/10.1088/1748-9326/ad0607
